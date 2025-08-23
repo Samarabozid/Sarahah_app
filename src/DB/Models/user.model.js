@@ -1,0 +1,82 @@
+import mongoose from "mongoose";
+
+const userSchema = new mongoose.Schema({
+    firstName: {
+        type: String,
+        required: true,
+        trim: true,
+        lowercase: true,
+        minlength: [3, "First name must be at least 3 characters long"],
+        maxlength: [50, "First name must be at most 50 characters long"]
+    },
+    lastName: {
+        type: String,
+        required: true,
+        trim: true,
+        lowercase: true,
+        minlength: [3, "Last name must be at least 3 characters long"],
+        maxlength: [50, "Last name must be at most 50 characters long"]
+    },
+    age: {
+        type: Number,
+        required: true,
+        min: [18, "Age must be at least 18"],
+        max: [120, "Age must be at most 120"],
+        index: {
+            name: "idx_age"
+        }
+    },
+    gender: {
+        type: String,
+        required: true,
+        enum: ["male", "female"],
+        default: "male"
+    },
+    phoneNumber: {
+        type: String,
+        required: true
+    },
+    otps: [{
+        confirmationCode: String,
+        resetPasswordCode: String
+    }],
+    isConfirmed: {
+        type: Boolean,
+        default: false
+    },
+    email: {
+        type: String,
+        required: true,
+        index: {
+            unique: true,
+            name: "idx_email"
+        }
+    }, password: {
+        type: String,
+        required: true,
+    },
+}, {
+    timestamps: true,
+    toJSON: {
+        virtuals: true
+    },
+    virtuals: {
+        fullName: {
+            get() {
+                return `${this.firstName} ${this.lastName}`;
+            }
+        }
+    },
+    methods: {
+        getFullName() {
+            return `${this.firstName} ${this.lastName}`;
+        },
+        getDoubleAge() {
+            return this.age * 2;
+        }
+    }
+});
+
+const User = mongoose.model("User", userSchema);
+
+export default User;
