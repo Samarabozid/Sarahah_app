@@ -11,7 +11,7 @@ import BlackListedTokens from "../../../DB/Models/black-listed-tokens.model.js";
 
 const uniqueString = customAlphabet('jksd7sjhk90', 5);
 
-export const SignUpService = async (req, res) => {
+export const SignUpService = async (req, res, next) => {
     const { firstName, lastName, age, gender, email, password, phoneNumber } = req.body;
     const isUserExist = await User.findOne({ $or: [{ email }, { firstName, lastName }] });
     if (isUserExist) {
@@ -191,6 +191,7 @@ export const refreshTokenService = async (req, res) => {
     return res.status(200).json({ message: "User token refreshed successfully", accessToken });
 
 }
+
 
 
 // forget password

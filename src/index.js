@@ -13,7 +13,6 @@ dbConnection();
 app.use("/api/users", userRouter);
 app.use("/api/messages", messageRouter);
 
-
 // error handling middleware
 app.use(async (err, req, res, next) => {
   console.log(err.stack);
