@@ -60,6 +60,9 @@ const userSchema = new mongoose.Schema({
     toJSON: {
         virtuals: true
     },
+    toObject: {
+        virtuals: true
+    },
     virtuals: {
         fullName: {
             get() {
@@ -76,6 +79,13 @@ const userSchema = new mongoose.Schema({
         }
     }
 });
+
+
+userSchema.virtual("Messages", {
+    ref: "Messages",
+    localField: "_id",
+    foreignField: "receiverId"
+})
 
 const User = mongoose.model("User", userSchema);
 
