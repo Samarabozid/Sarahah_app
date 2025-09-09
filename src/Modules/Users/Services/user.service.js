@@ -72,7 +72,7 @@ export const confirmEmailService = async (req, res, next) => {
     return res.status(200).json({ message: "User confirmed successfully", user });
 }
 
-export const SignInService = async (req, res) => {
+export const SignInService = async (req, res, next) => {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
     if (!user) {
@@ -195,4 +195,85 @@ export const refreshTokenService = async (req, res) => {
 
 
 // forget password
+export const forgetPasswordService = async (req, res, next) => {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+        return next(new Error("User not found", { cause: 404 }));
+    }
+
+    const otp = uniqueString();
+    const otpExpire = Date.now(Date.now() + 60 * 60 * 1000);
+    user.otps[0].resetPasswordCode = hashSync(otp, +process.env.SALT_ROUNDS);
+    user.otps[0].resetPasswordExpire = otpExpire;
+    await user.save();
+    await sendEmail({
+        to: email,
+        subject: "Reset Password",
+        content: `Your OTP is ${otp}`,
+    })
+    return res.status(200).json({ message: "Reset password email has been sent to your email" });
+}
 // reset password 
+
+export const resetPasswordService = async (req, res, next) => {
+    const { email, otp, newPassword } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+        return next(new Error("User not found", { cause: 404 }));
+    }
+    const isOtpValid = compareSync(otp, user.otps[0].resetPasswordCode);
+    if (!isOtpValid) {
+        return next(new Error("Invalid OTP", { cause: 400 }));
+    }
+
+    if (user.otps[0].resetPasswordExpire < Date.now()) {
+        return next(new Error("OTP has expired", { cause: 400 }));
+    }
+
+    const isOtpMatched = compareSync(otp, user.otps[0].resetPasswordCode);
+    if (!isOtpMatched) {
+        return next(new Error("OTP does not match", { cause: 400 }));
+    }
+
+    const hashedPassword = hashSync(newPassword, +process.env.SALT_ROUNDS);
+    const isPasswordValid = compareSync(newPassword, user.password);
+    if (isPasswordValid) {
+        return next(new Error("New password cannot be the same as the old password", { cause: 400 }));
+    }
+    user.password = hashedPassword;
+    user.otps[0].resetPasswordCode = undefined;
+    user.otps[0].resetPasswordExpire = undefined;
+    await user.save();
+
+
+    return res.status(200).json({ message: "Password reset successfully" });
+
+}
+// update password
+export const updatePasswordService = async (req, res, next) => {
+
+    const { user: { _id: userId } } = req.loggedInUser;
+    console.log(userId);
+
+    const { oldPassword, newPassword } = req.body;
+    const user = await User.findById(userId);
+    if (!user) {
+        return next(new Error("User not found", { cause: 404 }));
+    }
+    if (!user.password) {
+        return next(new Error("User has no password set", { cause: 400 }));
+      }
+      if (!oldPassword || !newPassword) {
+        return next(new Error("Password data missing", { cause: 400 }));
+      }
+    const isPasswordValid = compareSync(oldPassword, user.password);
+    if (!isPasswordValid) {
+        return next(new Error("Invalid password", { cause: 400 }));
+    }
+
+    const hashedPassword = hashSync(newPassword, +process.env.SALT_ROUNDS);
+    user.password = hashedPassword;
+    await user.save();
+    return res.status(200).json({ message: "Password updated successfully" });
+}

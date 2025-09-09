@@ -12,6 +12,9 @@ router.post("/signin", userService.SignInService);
 router.put("/confirmEmail", userService.confirmEmailService);
 router.post("/logout", authenticationMiddleware, userService.logoutUserService);
 router.post("/refreshToken", userService.refreshTokenService);
+router.post("/forgetPassword", userService.forgetPasswordService);
+router.post("/resetPassword", userService.resetPasswordService);
+router.post("/updatePassword", authenticationMiddleware, userService.updatePasswordService);
 
 // Account Router
 router.put("/update", authenticationMiddleware, userService.updateUserService);
