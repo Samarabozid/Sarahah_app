@@ -9,10 +9,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { generateAccessToken, verifyAccessToken } from "../../../Utils/tokens.utils.js";
 import BlackListedTokens from "../../../DB/Models/black-listed-tokens.model.js";
 
-const uniqueString = customAlphabet('jksd7sjhk90', 5);
+const uniqueString = customAlphabet('12334456', 5);
 
 export const SignUpService = async (req, res, next) => {
-    const { firstName, lastName, age, gender, email, password, phoneNumber } = req.body;
+    const { firstName, lastName, age, gender, email, password, phoneNumber, role } = req.body;
     const isUserExist = await User.findOne({ $or: [{ email }, { firstName, lastName }] });
     if (isUserExist) {
         return next(new Error("User already exists", { cause: 404 }));
@@ -33,6 +33,7 @@ export const SignUpService = async (req, res, next) => {
         age,
         gender,
         email,
+        role,
         password: hashedPassword,
         phoneNumber: encryptedPhoneNumber,
         otps: [{ confirmationCode: hashSync(otp, +process.env.SALT_ROUNDS) }]
